@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bulgarian Quest 🇧🇬</title>
+  <style>
+    :root {
+      --bg: #131f24;
+      --card-bg: #18282e;
+      --green: #58cc02;
+      --green-dark: #46a302;
+      --red: #ff4b4b;
+      --blue: #1cb0f6;
+      --yellow: #ffc800;
+      --purple: #ce82ff;
+      --text: #ffffff;
+      --text-muted: #93a3af;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; user-select: none; }
+    body { background-color: var(--bg); color: var(--text); padding: 12px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+
+    /* Header */
+    .top-bar { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 420px; background: var(--card-bg); padding: 12px 16px; border-radius: 16px; border: 2px solid #20353d; margin-bottom: 12px; }
+    .player-profile { display: flex; align-items: center; gap: 8px; }
+    .avatar { font-size: 1.6rem; cursor: pointer; }
+    .stats { display: flex; gap: 12px; font-weight: 800; font-size: 1rem; }
+    .hearts { color: var(--red); }
+    .xp { color: var(--yellow); }
+
+    .progress-container { width: 100%; max-width: 420px; background: #20353d; height: 12px; border-radius: 10px; margin-bottom: 16px; overflow: hidden; }
+    .progress-fill { background: var(--green); height: 100%; width: 0%; transition: width 0.3s; }
+
+    /* Tabs */
+    .nav-tabs { display: flex; gap: 8px; width: 100%; max-width: 420px; margin-bottom: 16px; }
+    .nav-btn { flex: 1; padding: 12px; border: none; border-bottom: 4px solid #20353d; border-radius: 12px; background: var(--card-bg); color: var(--text); font-weight: 800; font-size: 1rem; cursor: pointer; }
+    .nav-btn.active { border-color: var(--green); background: #20353d; color: var(--green); }
+
+    .view-card { width: 100%; max-width: 420px; background: var(--card-bg); border-radius: 20px; padding: 20px; border: 2px solid #20353d; display: none; flex-direction: column; gap: 16px; }
+    .view-card.active { display: flex; }
+
+    .question-title { font-size: 1.25rem; font-weight: 800; text-align: center; color: #fff; line-height: 1.4; }
+
+    /* Active Recall Learn Module */
+    .answer-hidden-prompt { text-align: center; font-size: 1rem; color: var(--yellow); background: #20353d; padding: 12px; border-radius: 12px; border: 2px dashed var(--yellow); cursor: pointer; }
+    
+    .answer-container { display: none; flex-direction: column; gap: 12px; }
+    .answer-box { background: #111c21; border-radius: 14px; padding: 16px; text-align: center; font-size: 1.2rem; font-weight: 800; color: var(--green); border: 2px solid var(--green); }
+    
+    .mnemonic-box { background: #1c2b36; border-radius: 12px; padding: 12px; font-size: 0.9rem; color: var(--text-muted); border-right: 4px solid var(--purple); line-height: 1.4; }
+    .mnemonic-box span { color: var(--purple); font-weight: bold; }
+
+    .vocab-tags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+    .vocab-tag { background: #20353d; color: var(--blue); padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; border: 1px solid #37464f; }
+
+    /* Self Assessment Confidence Rating */
+    .confidence-grid { display: flex; gap: 8px; width: 100%; margin-top: 8px; }
+    .conf-btn { flex: 1; padding: 12px 6px; border: none; border-bottom: 4px solid rgba(0,0,0,0.3); border-radius: 12px; color: white; font-weight: 800; font-size: 0.85rem; cursor: pointer; }
+    .conf-hard { background: var(--red); }
+    .conf-good { background: var(--yellow); color: #000; }
+    .conf-easy { background: var(--green); }
+
+    /* Practice Module */
+    .sentence-builder { min-height: 70px; border-bottom: 2px solid #20353d; display: flex; flex-wrap: wrap; gap: 8px; padding: 8px; align-items: center; justify-content: center; }
+    .word-bank { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 10px; }
+    .chip { background: #20353d; border: 2px solid #37464f; border-bottom-width: 4px; padding: 10px 14px; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 1rem; }
+    .chip.used { opacity: 0.25; pointer-events: none; }
+
+    .grid-options { display: flex; flex-direction: column; gap: 10px; }
+    .duo-btn { width: 100%; padding: 14px; background: #20353d; border: 2px solid #37464f; border-bottom-width: 4px; border-radius: 14px; color: white; font-weight: 700; font-size: 1rem; text-align: right; cursor: pointer; }
+    
+    .primary-btn { width: 100%; max-width: 420px; padding: 16px; border: none; border-bottom: 5px solid var(--green-dark); border-radius: 16px; background: var(--green); color: white; font-size: 1.1rem; font-weight: 900; cursor: pointer; margin-top: 12px; text-transform: uppercase; }
+    
+    .avatar-picker { display: flex; gap: 12px; justify-content: center; margin-top: 8px; }
+    .avatar-opt { font-size: 2rem; cursor: pointer; padding: 6px; border-radius: 12px; background: #20353d; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="player-profile">
+      <span id="player-avatar" class="avatar" onclick="toggleAvatarPicker()">🦊</span>
+      <div>
+        <div id="player-name-display" style="font-weight: 800; font-size: 0.95rem;">שחקן שלי</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted);">לחץ להחלפת אבטאר</div>
+      </div>
+    </div>
+    <div class="stats">
+      <span class="hearts">❤️ <span id="hearts-count">3</span></span>
+      <span class="xp">⚡ <span id="xp-count">0</span>XP</span>
+    </div>
+  </div>
+
+  <div id="avatar-modal" class="avatar-picker" style="display:none; margin-bottom: 12px;">
+    <span class="avatar-opt" onclick="selectAvatar('🦊')">🦊</span>
+    <span class="avatar-opt" onclick="selectAvatar('🐼')">🐼</span>
+    <span class="avatar-opt" onclick="selectAvatar('🦁')">🦁</span>
+    <span class="avatar-opt" onclick="selectAvatar('🐸')">🐸</span>
+    <span class="avatar-opt" onclick="selectAvatar('🦄')">🦄</span>
+  </div>
+
+  <div class="progress-container">
+    <div id="progress-bar" class="progress-fill"></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="nav-tabs">
+    <button id="nav-learn" class="nav-btn active" onclick="switchModule('learn')">למידה חכמה 📖</button>
+    <button id="nav-practice" class="nav-btn" onclick="switchModule('practice')">תרגול 🎮</button>
+  </div>
+
+  <!-- UPGRADED LEARN MODULE -->
+  <div id="learn-module" class="view-card active">
+    <div id="learn-q" class="question-title">טוען שאלה...</div>
+
+    <!-- Active Recall Tap Prompt -->
+    <div id="reveal-prompt" class="answer-hidden-prompt" onclick="revealAnswer()">
+      🧠 נסה להיזכר בתשובה, ואז לחץ כאן לחשיפה
+    </div>
+
+    <!-- Revealed Answer Box -->
+    <div id="answer-details" class="answer-container">
+      <div id="learn-a" class="answer-box">תשובה...</div>
+
+      <!-- Mnemonic Anchor -->
+      <div class="mnemonic-box">
+        <span>💡 טיפ לזיכרון:</span>
+        <div id="learn-note">...</div>
+      </div>
+
+      <!-- Key Words -->
+      <div id="learn-vocab" class="vocab-tags"></div>
+
+      <!-- Confidence Assessment -->
+      <div style="font-size:0.85rem; color:var(--text-muted); text-align:center; margin-top:4px;">איך הייתה השליפה מהזיכרון?</div>
+      <div class="confidence-grid">
+        <button class="conf-btn conf-hard" onclick="rateCard('hard')">קשה 🔴<br>(חזור שוב)</button>
+        <button class="conf-btn conf-good" onclick="rateCard('good')">סביר 🟡<br>(עוד מעט)</button>
+        <button class="conf-btn conf-easy" onclick="rateCard('easy')">קל 🟢<br>(שלוט!)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRACTICE MODULE -->
+  <div id="practice-module" class="view-card">
+    <div id="practice-q" class="question-title">טוען שאלה...</div>
+    <div id="choice-container" class="grid-options"></div>
+
+    <div id="builder-container" style="display:none;">
+      <div id="target-sentence" class="sentence-builder"></div>
+      <div id="source-bank" class="word-bank"></div>
+    </div>
+
+    <button class="primary-btn" onclick="checkPracticeAnswer()">בדוק תשובה!</button>
+  </div>
+
+  <script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      if (type === 'correct') {
+        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.25);
+      } else if (type === 'wrong') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(110, audioCtx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+      }
+    }
+
+    const qaData = [
+      { q: "מה הלאום שלך?", a: "יהודי", note: "זכור: לאום מתייחס לזהות הלאומית/אתנית (יהודי).", keywords: ["יהודי"] },
+      { q: "האם זאת הפעם הראשונה שאת/ה מגיש/ה מועמדות לקבלת אזרחות?", a: "כן", note: "תשובה קצרה וחד משמעית: 'כן'.", keywords: ["כן"] },
+      { q: "מה משלח ידך, מי המעסיק שלך?", a: "תלמיד", note: "תלמידים בגילאי בית ספר עונים פשוט 'תלמיד'.", keywords: ["תלמיד"] },
+      { q: "האם יש לך בני משפחה בעלי אזרחות בולגרית?", a: "אבא סבתא וסבתא רבא", note: "מציינים את השורשים הישירים מצד אבא.", keywords: ["אבא", "סבתא", "סבתא רבא"] },
+      { q: "האם יש לך בני משפחה שהגישו מועמדות לקבלת אזרחות בולגרית?", a: "לא", note: "תשובה פשוטה: 'לא'.", keywords: ["לא"] },
+      { q: "למה ברצונך לקבל אזרחות בולגרית?", a: "זיקה ושורשים משפחתיים", note: "המפתח הוא 'זיקה משפחתית' להרגיש מחובר למורשת.", keywords: ["זיקה", "שורשים משפחתיים"] },
+      { q: "איזה שיר הוא המנון הרפובליקה של בולגריה?", a: "מולדת אהובה", note: "בבולגרית מבוטא Mila Rodino (מולדת אהובה שלי).", keywords: ["מולדת אהובה"] },
+      { q: "איזו עיר היא בירת בולגריה?", a: "סופיה היא עיר הבירה", note: "סופיה היא הבירה והעיר הגדולה ביותר.", keywords: ["סופיה", "עיר הבירה"] },
+      { q: "איזה הר נמצא ליד סופיה?", a: "הר ויטושה", note: "ויטושה (Vitosha) הוא ההר שממש נושק לסופיה.", keywords: ["הר ויטושה"] },
+      { q: "איך נקרא החוק העקרוני של בולגריה?", a: "קונסטיטוציה", note: "מילה בינלאומית לחוקה: קונסטיטוציה (Konstitutsia).", keywords: ["קונסטיטוציה", "חוקה"] },
+      { q: "מהו החג الלאומי של בולגריה?", a: "שלושה במרץ יום השחרור", note: "3.3 - יום השחרור מהאימפריה הטורקית ב-1878.", keywords: ["3 במרץ", "יום השחרור"] },
+      { q: "לאיזה מסורת קשור התאריך 1 במרץ?", a: "באבא מרטה חג האביב", note: "מעניקים חוטים בצבעי אדום-לבן למזל באביב.", keywords: ["באבא מרטה", "חג האביב"] },
+      { q: "מתי חוגגים את יום התרבות הבולגרית?", a: "עשרים וארבעה במאי", note: "24.5 - יום האחים קיריל ומתודיי מפתחי האלפבית.", keywords: ["24 במאי", "קיריל ומתודיי"] },
+      { q: "איך נקרא המטבע הבולגרי?", a: "לב ולאחר מכן אירו", note: "נקרא לב (Lev) ומתחלף לאירו ב-2026.", keywords: ["לב", "אירו"] },
+      { q: "מיהו וסיל לבסקי?", a: "הגיבור הלאומי של בולגריה", note: "הקריב את חייו למען עצמאות בולגריה.", keywords: ["גיבור לאומי", "שחרור"] },
+      { q: "איך נקרא הריקוד האופייני הבולגרי?", a: "חורו", note: "דומה מאוד לריקוד ההורה המסורתי.", keywords: ["חורו", "הורה"] },
+      { q: "איזה מאכלים בולגרים מסורתיים מוכרים לך?", a: "טאראטור באניצה שקמבה", note: "טאראטור (מרק יוגורט), באניצה (פשטידה), שקמבה (מרק).", keywords: ["טאראטור", "באניצה", "שקמבה"] },
+      { q: "איך נקרא הא\"ב הבולגרי?", a: "קיריליצה", note: "האלפבית הקירילי המשמש בבולגרית.", keywords: ["קיריליצה"] },
+      { q: "באיזה מדינות גובלת בולגריה?", a: "רומניה טורקיה יוון סרביה ומקדוניה", note: "5 מדינות גובלות: בצפון רומניה, בדרום יוון וטורקיה.", keywords: ["רומניה", "טורקיה", "יוון", "סרביה", "מקדוניה"] },
+      { q: "נא לנקוב בשם נהר גדול בבולגריה.", a: "דנובה מריצה איסקר", note: "הדנובה הוא הנהר המפורסם בצפון המדינה.", keywords: ["דנובה", "מריצה", "איסקר"] }
+    ];
+
+    let hearts = 3;
+    let xp = 0;
+    let learnQueue = [...qaData.keys()];
+    let practiceIdx = 0;
+    let currentPracticeType = 'choice';
+    let selectedChoice = null;
+    let selectedWords = [];
+
+    function updateHeader() {
+      document.getElementById('hearts-count').textContent = hearts;
+      document.getElementById('xp-count').textContent = xp;
+    }
+
+    function toggleAvatarPicker() {
+      const modal = document.getElementById('avatar-modal');
+      modal.style.display = modal.style.display === 'none' ? 'flex' : 'none';
+    }
+
+    function selectAvatar(emoji) {
+      document.getElementById('player-avatar').textContent = emoji;
+      toggleAvatarPicker();
+    }
+
+    function switchModule(mod) {
+      document.getElementById('nav-learn').classList.toggle('active', mod === 'learn');
+      document.getElementById('nav-practice').classList.toggle('active', mod === 'practice');
+      document.getElementById('learn-module').classList.toggle('active', mod === 'learn');
+      document.getElementById('practice-module').classList.toggle('active', mod === 'practice');
+
+      if (mod === 'learn') renderLearn();
+      if (mod === 'practice') renderPractice();
+    }
+
+    // LEARN MODULE (ACTIVE RECALL & METACOGNITION)
+    function renderLearn() {
+      if (learnQueue.length === 0) learnQueue = [...qaData.keys()];
+
+      const cardIdx = learnQueue[0];
+      const item = qaData[cardIdx];
+
+      document.getElementById('learn-q').textContent = item.q;
+      document.getElementById('learn-a').textContent = item.a;
+      document.getElementById('learn-note').textContent = item.note;
+
+      const vocabBox = document.getElementById('learn-vocab');
+      vocabBox.innerHTML = '';
+      item.keywords.forEach(kw => {
+        const tag = document.createElement('span');
+        tag.className = 'vocab-tag';
+        tag.textContent = kw;
+        vocabBox.appendChild(tag);
+      });
+
+      // Hide answer initially
+      document.getElementById('reveal-prompt').style.display = 'block';
+      document.getElementById('answer-details').style.display = 'none';
+
+      document.getElementById('progress-bar').style.width = `${((qaData.length - learnQueue.length) / qaData.length) * 100}%`;
+    }
+
+    function revealAnswer() {
+      document.getElementById('reveal-prompt').style.display = 'none';
+      document.getElementById('answer-details').style.display = 'flex';
+      playSound('correct');
+    }
+
+    function rateCard(rating) {
+      const current = learnQueue.shift();
+      if (rating === 'hard') {
+        learnQueue.push(current); // Re-queue at end
+      } else if (rating === 'good') {
+        learnQueue.splice(Math.min(3, learnQueue.length), 0, current); // Re-queue soon
+      }
+      xp += (rating === 'easy' ? 10 : 5);
+      updateHeader();
+      renderLearn();
+    }
+
+    // PRACTICE MODULE
+    function renderPractice() {
+      const item = qaData[practiceIdx];
+      document.getElementById('practice-q').textContent = item.q;
+      document.getElementById('progress-bar').style.width = `${((practiceIdx + 1) / qaData.length) * 100}%`;
+
+      currentPracticeType = (practiceIdx % 2 === 0) ? 'choice' : 'builder';
+      selectedChoice = null;
+      selectedWords = [];
+
+      const choiceBox = document.getElementById('choice-container');
+      const builderBox = document.getElementById('builder-container');
+
+      if (currentPracticeType === 'choice') {
+        choiceBox.style.display = 'flex';
+        builderBox.style.display = 'none';
+
+        const wrongs = qaData.filter((_, i) => i !== practiceIdx).map(x => x.a).sort(() => 0.5 - Math.random()).slice(0, 3);
+        const opts = [item.a, ...wrongs].sort(() => 0.5 - Math.random());
+
+        choiceBox.innerHTML = '';
+        opts.forEach(opt => {
+          const btn = document.createElement('button');
+          btn.className = 'duo-btn';
+          btn.textContent = opt;
+          btn.onclick = () => {
+            document.querySelectorAll('.duo-btn').forEach(b => b.style.borderColor = '#37464f');
+            btn.style.borderColor = 'var(--blue)';
+            selectedChoice = opt;
+          };
+          choiceBox.appendChild(btn);
+        });
+      } else {
+        choiceBox.style.display = 'none';
+        builderBox.style.display = 'block';
+
+        document.getElementById('target-sentence').innerHTML = '';
+        const words = item.a.split(' ');
+        const extraWords = ["סופיה", "חוקה", "חג", "שלום", "בולגריה"];
+        const allWords = [...words, ...extraWords.slice(0, 3)].sort(() => 0.5 - Math.random());
+
+        const bank = document.getElementById('source-bank');
+        bank.innerHTML = '';
+        allWords.forEach((word) => {
+          const chip = document.createElement('div');
+          chip.className = 'chip';
+          chip.textContent = word;
+          chip.onclick = () => {
+            if(!chip.classList.contains('used')) {
+              chip.classList.add('used');
+              addWordToTarget(word, chip);
+            }
+          };
+          bank.appendChild(chip);
+        });
+      }
+    }
+
+    function addWordToTarget(word, originalChip) {
+      const target = document.getElementById('target-sentence');
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.textContent = word;
+      chip.onclick = () => {
+        target.removeChild(chip);
+        originalChip.classList.remove('used');
+        selectedWords = selectedWords.filter(w => w !== word);
+      };
+      target.appendChild(chip);
+      selectedWords.push(word);
+    }
+
+    function checkPracticeAnswer() {
+      const item = qaData[practiceIdx];
+      let isCorrect = false;
+
+      if (currentPracticeType === 'choice') {
+        if (!selectedChoice) return;
+        isCorrect = (selectedChoice === item.a);
+      } else {
+        isCorrect = (selectedWords.join(' ') === item.a);
+      }
+
+      if (isCorrect) {
+        playSound('correct');
+        xp += 15;
+        updateHeader();
+        alert("נכון מאוד! 🌟 (+15 XP)");
+        practiceIdx = (practiceIdx + 1) % qaData.length;
+        renderPractice();
+      } else {
+        playSound('wrong');
+        hearts = Math.max(0, hearts - 1);
+        updateHeader();
+        if (hearts === 0) {
+          alert("נגמרו הלבבות! 💔 עבור למוד למידה לרענון.");
+          hearts = 3;
+          updateHeader();
+          switchModule('learn');
+        } else {
+          alert("אוי, נסה שוב! 💔");
+        }
+      }
+    }
+
+    renderLearn();
+  </script>
+</body>
+</html>
