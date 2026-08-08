@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>לומדים אזרחות בולגרית 🇧🇬</title>
+  <style>
+    :root {
+      --bg: #f4f7f6;
+      --card-bg: #ffffff;
+      --primary: #00966e; /* Bulgarian Green */
+      --secondary: #d62612; /* Bulgarian Red */
+      --text: #2c3e50;
+      --text-muted: #7f8c8d;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      color: var(--primary);
+    }
+
+    header p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      background: #e0e0e0;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .mode-container {
+      width: 100%;
+      max-width: 400px;
+      display: none;
+    }
+
+    .mode-container.active {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Flashcard Style */
+    .card-wrapper {
+      perspective: 1000px;
+      width: 100%;
+      height: 280px;
+      margin-bottom: 20px;
+      cursor: pointer;
+    }
+
+    .card {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.6s ease;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+
+    .card.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .card-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 20px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      background: var(--card-bg);
+      border: 2px solid #e2e8f0;
+    }
+
+    .card-back {
+      transform: rotateY(180deg);
+      background: #fdfbfb;
+      border-color: var(--primary);
+    }
+
+    .card-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .card-content {
+      font-size: 1.25rem;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      gap: 12px;
+    }
+
+    .action-btn {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: bold;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .btn-prev { background: #95a5a6; }
+    .btn-next { background: var(--primary); }
+
+    .progress {
+      margin-top: 15px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    /* Quiz Style */
+    .quiz-card {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 20px;
+      width: 100%;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    .quiz-question {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .option-btn {
+      padding: 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      background: white;
+      font-size: 1rem;
+      text-align: right;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .option-btn.correct {
+      background: #d4edda;
+      border-color: #28a745;
+      color: #155724;
+    }
+
+    .option-btn.wrong {
+      background: #f8d7da;
+      border-color: #dc3545;
+      color: #721c24;
+    }
+
+    .quiz-score {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: var(--primary);
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>אזרחות בולגרית 🇧🇬</h1>
+    <p>כרטיסיות וחידון לשינון קל וכיפי</p>
+  </header>
+
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchMode('cards')">כרטיסיות 🎴</button>
+    <button class="tab-btn" onclick="switchMode('quiz')">חידון 🧩</button>
+  </div>
+
+  <!-- FLASHCARDS MODE -->
+  <div id="cards-mode" class="mode-container active">
+    <div class="card-wrapper" onclick="flipCard()">
+      <div id="flashcard" class="card">
+        <div class="card-face card-front">
+          <div class="card-label">שאלה</div>
+          <div id="card-q" class="card-content">טוען...</div>
+        </div>
+        <div class="card-face card-back">
+          <div class="card-label">תשובה</div>
+          <div id="card-a" class="card-content">טוען...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="action-btn btn-prev" onclick="prevCard()">הקודם</button>
+      <button class="action-btn btn-next" onclick="nextCard()">הבא</button>
+    </div>
+
+    <div id="card-progress" class="progress">1 / 20</div>
+  </div>
+
+  <!-- QUIZ MODE -->
+  <div id="quiz-mode" class="mode-container">
+    <div class="quiz-card">
+      <div id="quiz-q" class="quiz-question">שאלה...</div>
+      <div id="quiz-options" class="quiz-options"></div>
+    </div>
+
+    <button id="quiz-next-btn" class="action-btn btn-next" style="display:none;" onclick="nextQuizQuestion()">לשאלה הבאה</button>
+    <div id="quiz-score" class="quiz-score">ניקוד: 0</div>
+  </div>
+
+  <script>
+    const qaData = [
+      { q: "מה הלאום שלך?", a: "יהודי" },
+      { q: "האם זאת הפעם הראשונה שאת/ה מגיש/ה מועמדותך לקבלת אזרחות בולגרית על סמך מוצא?", a: "כן" },
+      { q: "מה משלח ידך, מי המעסיק שלך?", a: "תלמיד" },
+      { q: "האם יש לך בני משפחה בעלי אזרחות בולגרית?", a: "אבא (נולד בישראל, 19.10.1978), גם סבתא וסבתא רבא מצד אבא" },
+      { q: "האם יש לך בני משפחה שהגישו מועמדות לקבלת אזרחות בולגרית?", a: "לא" },
+      { q: "למה ברצונך לקבל אזרחות בולגרית?", a: "חיבור לשורשים ולמורשת המשפחתית, ואפשרויות לימודים ועבודה" },
+      { q: "איזה שיר הוא המנון הרפובליקה של בולגריה?", a: "מולדת אהובה (Mila Rodino)" },
+      { q: "איזו עיר היא בירת בולגריה? איזה רכס הרים נמצא לידה?", a: "סופיה היא עיר הבירה; ויטושה הוא ההר" },
+      { q: "איך נקרא החוק העקרוני של בולגריה אשר קובע את שיטת המשטר?", a: "קונסטיטוציה (חוקה)" },
+      { q: "מהו החג הלאומי של בולגריה ולרגל מה חוגגים אותו?", a: "ה-3 במרץ (3.3) - יום השחרור מהאימפריה הטורקית" },
+      { q: "לאיזה מסורת קשור התאריך 1 במרץ (1.3)?", a: "באבא מרטה (חג האביב) - מעניקים חוטים בצבעי אדום-לבן" },
+      { q: "מתי חוגגים את יום התרבות הבולגרית?", a: "24 במאי (24.5) - יום האחים קיריל ומתודיי ממציאי האלף-בית הקירילי" },
+      { q: "איך נקרא המטבע הבולגרי?", a: "עד 2026 נקרא לב. החל מ-2026 משתמשים באירו" },
+      { q: "מיהו וסיל לבסקי?", a: "הגיבור הלאומי של בולגריה שפעל והקריב את חייו להקמת ארגון לאומי לשחרור בולגריה מהטורקים" },
+      { q: "איך נקרא הריקוד האופייני הבולגרי?", a: "חורו (דומה להורה היהודי)" },
+      { q: "איזה מאכלים בולגרים מסורתיים מוכרים לך?", a: "טאראטור (מרק יוגורט קר), באניצה (פשטידת גבינות), שקמבה (מרק מעיים)" },
+      { q: "איך נקרא הא\"ב הבולגרי?", a: "קיריליצה" },
+      { q: "באיזה מדינות גובלת בולגריה?", a: "רומניה, טורקיה, יוון, סרביה ומקדוניה" },
+      { q: "נא לנקוב בשם נהר גדול בבולגריה.", a: "דנובה, מריצה, איסקר" },
+      { q: "האם יש פרטים או עובדות שהסתרת ו/או לא ציינת בבקשה?", a: "לא" }
+    ];
+
+    // Card State
+    let currentCardIndex = 0;
+    let isFlipped = false;
+
+    // Quiz State
+    let currentQuizIndex = 0;
+    let score = 0;
+
+    function switchMode(mode) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.mode-container').forEach(c => c.classList.remove('active'));
+
+      if (mode === 'cards') {
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+        document.getElementById('cards-mode').classList.add('active');
+        renderCard();
+      } else {
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+        document.getElementById('quiz-mode').classList.add('active');
+        startQuiz();
+      }
+    }
+
+    // Flashcards Functions
+    function renderCard() {
+      const cardEl = document.getElementById('flashcard');
+      cardEl.classList.remove('flipped');
+      isFlipped = false;
+
+      const item = qaData[currentCardIndex];
+      document.getElementById('card-q').textContent = item.q;
+      document.getElementById('card-a').textContent = item.a;
+      document.getElementById('card-progress').textContent = `${currentCardIndex + 1} / ${qaData.length}`;
+    }
+
+    function flipCard() {
+      const cardEl = document.getElementById('flashcard');
+      isFlipped = !isFlipped;
+      if (isFlipped) {
+        cardEl.classList.add('flipped');
+      } else {
+        cardEl.classList.remove('flipped');
+      }
+    }
+
+    function nextCard() {
+      currentCardIndex = (currentCardIndex + 1) % qaData.length;
+      renderCard();
+    }
+
+    function prevCard() {
+      currentCardIndex = (currentCardIndex - 1 + qaData.length) % qaData.length;
+      renderCard();
+    }
+
+    // Quiz Functions
+    function startQuiz() {
+      score = 0;
+      currentQuizIndex = 0;
+      document.getElementById('quiz-score').textContent = `ניקוד: ${score}`;
+      renderQuizQuestion();
+    }
+
+    function renderQuizQuestion() {
+      const nextBtn = document.getElementById('quiz-next-btn');
+      nextBtn.style.display = 'none';
+
+      const currentItem = qaData[currentQuizIndex];
+      document.getElementById('quiz-q').textContent = currentItem.q;
+
+      // Get 3 wrong options
+      const otherAnswers = qaData
+        .filter((_, idx) => idx !== currentQuizIndex)
+        .map(item => item.a);
+      
+      const shuffledOthers = otherAnswers.sort(() => 0.5 - Math.random()).slice(0, 3);
+      const options = [currentItem.a, ...shuffledOthers].sort(() => 0.5 - Math.random());
+
+      const optionsContainer = document.getElementById('quiz-options');
+      optionsContainer.innerHTML = '';
+
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.textContent = opt;
+        btn.onclick = () => checkAnswer(btn, opt, currentItem.a);
+        optionsContainer.appendChild(btn);
+      });
+    }
+
+    function checkAnswer(selectedBtn, selectedOpt, correctOpt) {
+      const buttons = document.querySelectorAll('.option-btn');
+      buttons.forEach(btn => btn.disabled = true);
+
+      if (selectedOpt === correctOpt) {
+        selectedBtn.classList.add('correct');
+        score += 10;
+        document.getElementById('quiz-score').textContent = `ניקוד: ${score}`;
+      } else {
+        selectedBtn.classList.add('wrong');
+        buttons.forEach(btn => {
+          if (btn.textContent === correctOpt) {
+            btn.classList.add('correct');
+          }
+        });
+      }
+
+      document.getElementById('quiz-next-btn').style.display = 'block';
+    }
+
+    function nextQuizQuestion() {
+      currentQuizIndex = (currentQuizIndex + 1) % qaData.length;
+      renderQuizQuestion();
+    }
+
+    // Initialize
+    renderCard();
+  </script>
+</body>
+</html>
