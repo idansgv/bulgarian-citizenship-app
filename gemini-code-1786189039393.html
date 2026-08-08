@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bulgarian Quest 🇧🇬</title>
+  <style>
+    :root {
+      --bg: #131f24;
+      --card-bg: #18282e;
+      --green: #58cc02;
+      --green-dark: #46a302;
+      --red: #ff4b4b;
+      --blue: #1cb0f6;
+      --yellow: #ffc800;
+      --purple: #ce82ff;
+      --text: #ffffff;
+      --text-muted: #93a3af;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg); color: var(--text); padding: 12px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; pb: 90px; }
+
+    /* Top Stats Bar */
+    .top-bar { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 420px; background: var(--card-bg); padding: 12px 16px; border-radius: 16px; border: 2px solid #20353d; margin-bottom: 12px; }
+    .player-profile { display: flex; align-items: center; gap: 8px; }
+    .avatar { font-size: 1.6rem; cursor: pointer; }
+    .stats { display: flex; gap: 12px; font-weight: 800; font-size: 1rem; }
+    .hearts { color: var(--red); }
+    .xp { color: var(--yellow); }
+
+    /* Progress Bar */
+    .progress-container { width: 100%; max-width: 420px; background: #20353d; height: 12px; border-radius: 10px; margin-bottom: 16px; overflow: hidden; }
+    .progress-fill { background: var(--green); height: 100%; width: 0%; transition: width 0.3s; }
+
+    /* Navigation Tabs */
+    .nav-tabs { display: flex; gap: 8px; width: 100%; max-width: 420px; margin-bottom: 16px; }
+    .nav-btn { flex: 1; padding: 12px; border: none; border-bottom: 4px solid #20353d; border-radius: 12px; background: var(--card-bg); color: var(--text); font-weight: 800; font-size: 1rem; cursor: pointer; }
+    .nav-btn.active { border-color: var(--green); background: #20353d; color: var(--green); }
+
+    /* View Cards */
+    .view-card { width: 100%; max-width: 420px; background: var(--card-bg); border-radius: 20px; padding: 20px; border: 2px solid #20353d; display: none; flex-direction: column; gap: 16px; }
+    .view-card.active { display: flex; }
+
+    .question-title { font-size: 1.25rem; font-weight: 800; text-align: center; color: #fff; line-height: 1.4; }
+
+    /* Learn Module */
+    .answer-hidden-prompt { text-align: center; font-size: 1rem; color: var(--yellow); background: #20353d; padding: 16px; border-radius: 14px; border: 2px dashed var(--yellow); cursor: pointer; font-weight: 700; }
+    
+    .answer-container { display: none; flex-direction: column; gap: 12px; }
+    .answer-box { background: #111c21; border-radius: 14px; padding: 16px; text-align: center; font-size: 1.25rem; font-weight: 800; color: var(--green); border: 2px solid var(--green); }
+    
+    .mnemonic-box { background: #1c2b36; border-radius: 12px; padding: 14px; font-size: 0.95rem; color: var(--text); border-right: 4px solid var(--purple); line-height: 1.4; }
+    .mnemonic-box span { color: var(--purple); font-weight: bold; display: block; margin-bottom: 4px; }
+
+    .vocab-tags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+    .vocab-tag { background: #20353d; color: var(--blue); padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; border: 1px solid #37464f; }
+
+    .confidence-grid { display: flex; gap: 8px; width: 100%; margin-top: 8px; }
+    .conf-btn { flex: 1; padding: 12px 6px; border: none; border-bottom: 4px solid rgba(0,0,0,0.3); border-radius: 12px; color: white; font-weight: 800; font-size: 0.85rem; cursor: pointer; }
+    .conf-hard { background: var(--red); }
+    .conf-good { background: var(--yellow); color: #000; }
+    .conf-easy { background: var(--green); }
+
+    /* Practice Module & Chunked Word Bank */
+    .sentence-builder { min-height: 70px; border-bottom: 2px solid #20353d; display: flex; flex-wrap: wrap; gap: 8px; padding: 8px; align-items: center; justify-content: center; }
+    .word-bank { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 10px; }
+    .chip { background: #20353d; border: 2px solid #37464f; border-bottom-width: 4px; padding: 10px 14px; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 1rem; }
+    .chip.used { opacity: 0.25; pointer-events: none; }
+
+    .grid-options { display: flex; flex-direction: column; gap: 10px; }
+    .duo-btn { width: 100%; padding: 14px; background: #20353d; border: 2px solid #37464f; border-bottom-width: 4px; border-radius: 14px; color: white; font-weight: 700; font-size: 1rem; text-align: right; cursor: pointer; }
+    
+    .primary-btn { width: 100%; max-width: 420px; padding: 16px; border: none; border-bottom: 5px solid var(--green-dark); border-radius: 16px; background: var(--green); color: white; font-size: 1.1rem; font-weight: 900; cursor: pointer; margin-top: 12px; text-transform: uppercase; }
+
+    /* Mobile Bottom Feedback Toast */
+    .feedback-banner { position: fixed; bottom: 0; left: 0; right: 0; padding: 16px; display: none; flex-direction: column; gap: 8px; z-index: 99; border-top-left-radius: 20px; border-top-right-radius: 20px; box-shadow: 0 -4px 20px rgba(0,0,0,0.5); }
+    .feedback-banner.correct { background: #183313; border-top: 3px solid var(--green); color: var(--green); }
+    .feedback-banner.wrong { background: #331313; border-top: 3px solid var(--red); color: var(--red); }
+    .feedback-title { font-weight: 900; font-size: 1.2rem; display: flex; align-items: center; gap: 8px; }
+    .feedback-text { font-size: 0.95rem; color: #fff; }
+
+    .avatar-picker { display: flex; gap: 12px; justify-content: center; margin-top: 8px; }
+    .avatar-opt { font-size: 2rem; cursor: pointer; padding: 6px; border-radius: 12px; background: #20353d; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="player-profile">
+      <span id="player-avatar" class="avatar" onclick="toggleAvatarPicker()">🦊</span>
+      <div>
+        <div id="player-name-display" style="font-weight: 800; font-size: 0.95rem;">שחקן שלי</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted);">לחץ להחלפת אבטאר</div>
+      </div>
+    </div>
+    <div class="stats">
+      <span class="hearts">❤️ <span id="hearts-count">3</span></span>
+      <span class="xp">⚡ <span id="xp-count">0</span>XP</span>
+    </div>
+  </div>
+
+  <div id="avatar-modal" class="avatar-picker" style="display:none; margin-bottom: 12px;">
+    <span class="avatar-opt" onclick="selectAvatar('🦊')">🦊</span>
+    <span class="avatar-opt" onclick="selectAvatar('🐼')">🐼</span>
+    <span class="avatar-opt" onclick="selectAvatar('🦁')">🦁</span>
+    <span class="avatar-opt" onclick="selectAvatar('🐸')">🐸</span>
+    <span class="avatar-opt" onclick="selectAvatar('🦄')">🦄</span>
+  </div>
+
+  <div class="progress-container">
+    <div id="progress-bar" class="progress-fill"></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="nav-tabs">
+    <button id="nav-learn" class="nav-btn active" onclick="switchModule('learn')">למידה חכמה 📖</button>
+    <button id="nav-practice" class="nav-btn" onclick="switchModule('practice')">תרגול 🎮</button>
+  </div>
+
+  <!-- LEARN MODULE -->
+  <div id="learn-module" class="view-card active">
+    <div id="learn-q" class="question-title">טוען שאלה...</div>
+
+    <div id="reveal-prompt" class="answer-hidden-prompt" onclick="revealAnswer()">
+      🧠 נסה להיזכר בתשובה, ואז לחץ כאן לחשיפה
+    </div>
+
+    <div id="answer-details" class="answer-container">
+      <div id="learn-a" class="answer-box">תשובה...</div>
+
+      <div class="mnemonic-box">
+        <span>💡 טיפ לזיכרון:</span>
+        <div id="learn-note">...</div>
+      </div>
+
+      <div id="learn-vocab" class="vocab-tags"></div>
+
+      <div style="font-size:0.85rem; color:var(--text-muted); text-align:center; margin-top:4px;">איך הייתה השליפה מהזיכרון?</div>
+      <div class="confidence-grid">
+        <button class="conf-btn conf-hard" onclick="rateCard('hard')">קשה 🔴<br>(חזור שוב)</button>
+        <button class="conf-btn conf-good" onclick="rateCard('good')">סביר 🟡<br>(עוד מעט)</button>
+        <button class="conf-btn conf-easy" onclick="rateCard('easy')">קל 🟢<br>(שלוט!)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRACTICE MODULE -->
+  <div id="practice-module" class="view-card">
+    <div id="practice-q" class="question-title">טוען שאלה...</div>
+    <div id="choice-container" class="grid-options"></div>
+
+    <div id="builder-container" style="display:none;">
+      <div id="target-sentence" class="sentence-builder"></div>
+      <div id="source-bank" class="word-bank"></div>
+    </div>
+
+    <button id="check-btn" class="primary-btn" onclick="checkPracticeAnswer()">בדוק תשובה!</button>
+  </div>
+
+  <!-- Bottom Feedback Banner (Replaces alerts) -->
+  <div id="feedback-banner" class="feedback-banner">
+    <div id="feedback-title" class="feedback-title"></div>
+    <div id="feedback-text" class="feedback-text"></div>
+    <button id="feedback-btn" class="primary-btn" style="margin-top:4px;" onclick="continueAfterFeedback()">המשך ➔</button>
+  </div>
+
+  <script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      if (type === 'correct') {
+        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.25);
+      } else if (type === 'wrong') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(110, audioCtx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+      }
+    }
+
+    const qaData = [
+      {
+        q: "מה הלאום שלך?",
+        a: "יהודי",
+        chunks: ["יהודי"],
+        distractors: ["ישראלי", "בולגרי", "אירופאי"],
+        notes: [
+          "תחשוב על סמל מגן דוד - הלאום מבוסס על השורשים והמורשת (יהודי).",
+          "זכור: שואלים על לאום (לא אזרחות) - התשובה היא פשוט 'יהודי'."
+        ],
+        keywords: ["יהודי"]
+      },
+      {
+        q: "האם זאת הפעם הראשונה שאת/ה מגיש/ה מועמדות לקבלת אזרחות?",
+        a: "כן",
+        chunks: ["כן"],
+        distractors: ["לא", "אולי", "בעבר"],
+        notes: [
+          "קל ופשוט: התשובה היא רק מילה אחת חיובית - 'כן'!",
+          "אם זאת הבקשה הראשונה שלכם, שומרים על זה פשוט: 'כן'."
+        ],
+        keywords: ["כן"]
+      },
+      {
+        q: "מה משלח ידך, מי המעסיק שלך?",
+        a: "תלמיד",
+        chunks: ["תלמיד"],
+        distractors: ["עובד", "מורה", "מהנדס"],
+        notes: [
+          "תחשוב על ילקוט ובית ספר - התשובה שלכם היא פשוט 'תלמיד'!",
+          "כל עוד אתם בבית הספר, התשובה הקצרה היא 'תלמיד'."
+        ],
+        keywords: ["תלמיד"]
+      },
+      {
+        q: "האם יש לך בני משפחה בעלי אזרחות בולגרית?",
+        a: "אבא סבתא וסבתא רבא",
+        chunks: ["אבא", "סבתא", "וסבתא רבא"],
+        distractors: ["אמא", "סבא", "דוד"],
+        notes: [
+          "שרשרת הדורות מצד אבא: אבא ➔ סבתא ➔ סבתא רבא!",
+          "זכור את השילוש המשפחתי: אבא, סבתא, וסבתא רבא."
+        ],
+        keywords: ["אבא", "סבתא", "סבתא רבא"]
+      },
+      {
+        q: "האם יש לך בני משפחה שהגישו מועמדות לקבלת אזרחות בולגרית?",
+        a: "לא",
+        chunks: ["לא"],
+        distractors: ["כן", "אולי", "חלקם"],
+        notes: [
+          "אם אף אחד אחר לא הגיש, עונים בביטחון: 'לא'.",
+          "תשובה קצרה ומדויקת: 'לא'."
+        ],
+        keywords: ["לא"]
+      },
+      {
+        q: "למה ברצונך לקבל אזרחות בולגרית?",
+        a: "זיקה ושורשים משפחתיים לבולגריה",
+        chunks: ["זיקה ושורשים", "משפחתיים לבולגריה"],
+        distractors: ["עבודה בלבד", "טיולים באירופה", "מגורים בסופיה"],
+        notes: [
+          "מילות הקסם: 'זיקה ושורשים' - חיבור עמוק להיסטוריה של המשפחה.",
+          "דמיין עץ משפחה עתיק ששורשיו מגיעים עד בולגריה!"
+        ],
+        keywords: ["זיקה", "שורשים משפחתיים"]
+      },
+      {
+        q: "איזה שיר הוא המנון הרפובליקה של בולגריה?",
+        a: "מולדת אהובה",
+        chunks: ["מולדת אהובה"],
+        distractors: ["המנון אירופה", "בולגריה שלי", "ארץ עתיקה"],
+        notes: [
+          "בבולגרית ההמנון נקרא 'מילה רודינו' - שתרגומו 'מולדת אהובה'.",
+          "המנון שר באהבה למולדת ➔ 'מולדת אהובה'."
+        ],
+        keywords: ["מולדת אהובה", "Mila Rodino"]
+      },
+      {
+        q: "איזו עיר היא בירת בולגריה? איזה הר נמצא לידה?",
+        a: "סופיה היא עיר הבירה והר ויטושה נמצא לידה",
+        chunks: ["סופיה היא עיר הבירה", "והר ויטושה", "נמצא לידה"],
+        distractors: ["פלובדיב היא הבירה", "הר אולימפוס", "וארנה הבירה"],
+        notes: [
+          "חרוז לזיכרון: סופיה העיר היפה, נושקת להר ויטושה!",
+          "דמיין את העיר סופיה מוצלת תחת הר ויטושה הגבוה."
+        ],
+        keywords: ["סופיה", "הר ויטושה"]
+      },
+      {
+        q: "איך נקרא החוק העקרוני של בולגריה?",
+        a: "קונסטיטוציה",
+        chunks: ["קונסטיטוציה"],
+        distractors: ["דמוקרטיה", "פרלמנט", "מגנה כרטה"],
+        notes: [
+          "מילה בינלאומית מפורסמת לחוקה: קונסטיטוציה (Constitution).",
+          "תחשוב על החוקה המרכזית הקובעת את חוקי המדינה."
+        ],
+        keywords: ["קונסטיטוציה", "חוקה"]
+      },
+      {
+        q: "מהו החג الלאומי של בולגריה ולרגל מה חוגגים אותו?",
+        a: "שלושה במרץ יום השחרור מהטורקים",
+        chunks: ["שלושה במרץ", "יום השחרור", "מהטורקים"],
+        distractors: ["אחד במאי", "יום העצמאות", "עשרים וארבעה במאי"],
+        notes: [
+          "תאריך קל לזכור: 3.3 (3 במרץ) - יום השחרור מנהלת האימפריה הטורקית!",
+          "זכור את הצמד 3 ו-3: ה-3 במרץ, יום השחרור!"
+        ],
+        keywords: ["3 במרץ", "יום השחרור"]
+      },
+      {
+        q: "לאיזה מסורת קשור התאריך 1 במרץ?",
+        a: "באבא מרטה חג האביב",
+        chunks: ["באבא מרטה", "חג האביב"],
+        distractors: ["יום המורה", "פסטיבל הוורדים", "חג החורף"],
+        notes: [
+          "סבתא מרטה ('באבא מרטה') מביאה את האביב ב-1.3 מעניקים חוטים אדומים-לבנים!",
+          "1 במרץ ➔ סבתא מרטה (באבא מרטה) מברכת באביב שמח."
+        ],
+        keywords: ["באבא מרטה", "1 במרץ", "אביב"]
+      },
+      {
+        q: "מתי חוגגים את יום התרבות והכתב הבולגרי?",
+        a: "עשרים וארבעה במאי",
+        chunks: ["עשרים וארבעה במאי"],
+        distractors: ["שלושה במרץ", "אחד במרץ", "עשרה באוגוסט"],
+        notes: [
+          "תאריך התרבות: 24.5 - יום האחים קיריל ומתודיי שהמציאו את האלפבית!",
+          "חג הספרות והכתב חל בסוף האביב - ב-24 במאי."
+        ],
+        keywords: ["24 במאי", "תרבות וכתב"]
+      },
+      {
+        q: "איך נקרא המטבע הבולגרי?",
+        a: "עד שנת 2026 לב והחל מ-2026 אירו",
+        chunks: ["עד שנת 2026 לב", "והחל מ-2026 אירו"],
+        distractors: ["דולר ולאחר מכן לב", "רובל ואז אירו", "פרנק ושקל"],
+        notes: [
+          "זכור: פעם שילמו ב-'לב' (Lev), ומהשנה משתמשים במטבע האירו!",
+          "לב בעבר, אירו בהווה ובעתיד!"
+        ],
+        keywords: ["לב", "אירו"]
+      },
+      {
+        q: "מיהו וסיל לבסקי?",
+        a: "הגיבור הלאומי של בולגריה",
+        chunks: ["הגיבור הלאומי", "של בולגריה"],
+        distractors: ["ראש הממשלה הראשון", "משורר מפורסם", "מלך בולגריה"],
+        notes: [
+          "לבסקי נחשב לגיבור הגדול ביותר שהקריב נפשו למען שחרור המדינה.",
+          "תזכורת: וסיל לבסקי = הגיבור הלאומי (National Hero)."
+        ],
+        keywords: ["וסיל לבסקי", "גיבור לאומי"]
+      },
+      {
+        q: "איך נקרא הריקוד האופייני הבולגרי?",
+        a: "חורו",
+        chunks: ["חורו"],
+        distractors: ["סלסה", "סירטאקי", "פלקו"],
+        notes: [
+          "נשמע כמעט בדיוק כמו הריקוד שלנו - 'הורה' הופך ל-'חורו'!",
+          "חורו קשור במעגל בדיוק כמו הורה!"
+        ],
+        keywords: ["חורו", "הורה"]
+      },
+      {
+        q: "איזה מאכלים בולגרים מסורתיים מוכרים לך?",
+        a: "טאראטור באניצה ושקמבה",
+        chunks: ["טאראטור", "באניצה", "ושקמבה"],
+        distractors: ["פיצה ופסטה", "חומוס ופלאפל", "סושי ומוקפץ"],
+        notes: [
+          "שלישיית הטעמים: טאראטור (מרק יוגורט קר), באניצה (פשטידה) ושקמבה!",
+          "דמיין שולחן בולגרי עם באניצה חמה וטאראטור קר."
+        ],
+        keywords: ["טאראטור", "באניצה", "שקמבה"]
+      },
+      {
+        q: "איך נקרא הא\"ב הבולגרי?",
+        a: "קיריליצה",
+        chunks: ["קיריליצה"],
+        distractors: ["לטינית", "עברית", "יוונית"],
+        notes: [
+          "האלפבית נקרא על שם קילוס (קיריל) ➔ קיריליצה!",
+          "הכתב הבולגרי המיוחד מבוסס על האותיות הקיריליות."
+        ],
+        keywords: ["קיריליצה"]
+      },
+      {
+        q: "באיזה מדינות גובלת בולגריה?",
+        a: "רומניה טורקיה יוון סרביה ומקדוניה",
+        chunks: ["רומניה", "טורקיה ויוון", "סרביה ומקדוניה"],
+        distractors: ["איטליה וצרפת", "גרמניה ופולין", "ספרד ופורטוגל"],
+        notes: [
+          "5 השכנות: בצפון רומניה, בדרום יוון וטורקיה, במערב סרביה ומקדוניה!",
+          "תחשוב על השכנות של בולגריה בבלקן."
+        ],
+        keywords: ["רומניה", "טורקיה", "יוון", "סרביה", "מקדוניה"]
+      },
+      {
+        q: "נא לנקוב בשם נהר גדול בבולגריה.",
+        a: "דנובה מריצה איסקר",
+        chunks: ["דנובה", "מריצה", "איסקר"],
+        distractors: ["הנילוס", "הירדן", "האמזונס"],
+        notes: [
+          "הנהר המפורסם באירופה שזורם בצפון בולגריה: הדנובה (Danube)!",
+          "נהרות מרכזיים: דנובה, מריצה ואיסקר."
+        ],
+        keywords: ["דנובה", "מריצה", "איסקר"]
+      }
+    ];
+
+    let hearts = 3;
+    let xp = 0;
+    let learnQueue = [...qaData.keys()];
+    let practiceIdx = 0;
+    let currentPracticeType = 'choice';
+    let selectedChoice = null;
+    let selectedWords = [];
+
+    function updateHeader() {
+      document.getElementById('hearts-count').textContent = hearts;
+      document.getElementById('xp-count').textContent = xp;
+    }
+
+    function toggleAvatarPicker() {
+      const modal = document.getElementById('avatar-modal');
+      modal.style.display = modal.style.display === 'none' ? 'flex' : 'none';
+    }
+
+    function selectAvatar(emoji) {
+      document.getElementById('player-avatar').textContent = emoji;
+      toggleAvatarPicker();
+    }
+
+    function switchModule(mod) {
+      document.getElementById('nav-learn').classList.toggle('active', mod === 'learn');
+      document.getElementById('nav-practice').classList.toggle('active', mod === 'practice');
+      document.getElementById('learn-module').classList.toggle('active', mod === 'learn');
+      document.getElementById('practice-module').classList.toggle('active', mod === 'practice');
+
+      if (mod === 'learn') renderLearn();
+      if (mod === 'practice') renderPractice();
+    }
+
+    // LEARN MODULE (DYNAMIC RANDOM TIP GENERATOR)
+    function renderLearn() {
+      if (learnQueue.length === 0) learnQueue = [...qaData.keys()];
+
+      const cardIdx = learnQueue[0];
+      const item = qaData[cardIdx];
+
+      document.getElementById('learn-q').textContent = item.q;
+      document.getElementById('learn-a').textContent = item.a;
+
+      // Pick random note from pool
+      const randomNote = item.notes[Math.floor(Math.random() * item.notes.length)];
+      document.getElementById('learn-note').textContent = randomNote;
+
+      const vocabBox = document.getElementById('learn-vocab');
+      vocabBox.innerHTML = '';
+      item.keywords.forEach(kw => {
+        const tag = document.createElement('span');
+        tag.className = 'vocab-tag';
+        tag.textContent = kw;
+        vocabBox.appendChild(tag);
+      });
+
+      document.getElementById('reveal-prompt').style.display = 'block';
+      document.getElementById('answer-details').style.display = 'none';
+
+      document.getElementById('progress-bar').style.width = `${((qaData.length - learnQueue.length) / qaData.length) * 100}%`;
+    }
+
+    function revealAnswer() {
+      document.getElementById('reveal-prompt').style.display = 'none';
+      document.getElementById('answer-details').style.display = 'flex';
+      playSound('correct');
+    }
+
+    function rateCard(rating) {
+      const current = learnQueue.shift();
+      if (rating === 'hard') {
+        learnQueue.push(current);
+      } else if (rating === 'good') {
+        learnQueue.splice(Math.min(3, learnQueue.length), 0, current);
+      }
+      xp += (rating === 'easy' ? 10 : 5);
+      updateHeader();
+      renderLearn();
+    }
+
+    // PRACTICE MODULE (MEANINGFUL PHRASE CHUNKS)
+    function renderPractice() {
+      const item = qaData[practiceIdx];
+      document.getElementById('practice-q').textContent = item.q;
+      document.getElementById('progress-bar').style.width = `${((practiceIdx + 1) / qaData.length) * 100}%`;
+
+      currentPracticeType = (practiceIdx % 2 === 0) ? 'choice' : 'builder';
+      selectedChoice = null;
+      selectedWords = [];
+
+      const choiceBox = document.getElementById('choice-container');
+      const builderBox = document.getElementById('builder-container');
+
+      if (currentPracticeType === 'choice') {
+        choiceBox.style.display = 'flex';
+        builderBox.style.display = 'none';
+
+        const opts = [item.a, ...item.distractors].sort(() => 0.5 - Math.random());
+
+        choiceBox.innerHTML = '';
+        opts.forEach(opt => {
+          const btn = document.createElement('button');
+          btn.className = 'duo-btn';
+          btn.textContent = opt;
+          btn.onclick = () => {
+            document.querySelectorAll('.duo-btn').forEach(b => b.style.borderColor = '#37464f');
+            btn.style.borderColor = 'var(--blue)';
+            selectedChoice = opt;
+          };
+          choiceBox.appendChild(btn);
+        });
+      } else {
+        choiceBox.style.display = 'none';
+        builderBox.style.display = 'block';
+
+        document.getElementById('target-sentence').innerHTML = '';
+        
+        // Use meaningful chunks instead of single words
+        const chunks = item.chunks;
+        const extraChunks = ["סופיה העיר", "חוקה לאומית", "חג אביב", "היסטוריה בולגרית"];
+        const allChunks = [...chunks, ...extraChunks.slice(0, 2)].sort(() => 0.5 - Math.random());
+
+        const bank = document.getElementById('source-bank');
+        bank.innerHTML = '';
+        allChunks.forEach((chunk) => {
+          const chip = document.createElement('div');
+          chip.className = 'chip';
+          chip.textContent = chunk;
+          chip.onclick = () => {
+            if(!chip.classList.contains('used')) {
+              chip.classList.add('used');
+              addChunkToTarget(chunk, chip);
+            }
+          };
+          bank.appendChild(chip);
+        });
+      }
+    }
+
+    function addChunkToTarget(chunk, originalChip) {
+      const target = document.getElementById('target-sentence');
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.textContent = chunk;
+      chip.onclick = () => {
+        target.removeChild(chip);
+        originalChip.classList.remove('used');
+        selectedWords = selectedWords.filter(w => w !== chunk);
+      };
+      target.appendChild(chip);
+      selectedWords.push(chunk);
+    }
+
+    function checkPracticeAnswer() {
+      const item = qaData[practiceIdx];
+      let isCorrect = false;
+
+      if (currentPracticeType === 'choice') {
+        if (!selectedChoice) return;
+        isCorrect = (selectedChoice === item.a);
+      } else {
+        isCorrect = (selectedWords.join(' ') === item.a);
+      }
+
+      showFeedback(isCorrect, item.a);
+    }
+
+    // NON-BLOCKING TOAST FEEDBACK
+    function showFeedback(isCorrect, correctAnswer) {
+      const banner = document.getElementById('feedback-banner');
+      const title = document.getElementById('feedback-title');
+      const text = document.getElementById('feedback-text');
+
+      banner.className = `feedback-banner ${isCorrect ? 'correct' : 'wrong'}`;
+      banner.style.display = 'flex';
+
+      if (isCorrect) {
+        playSound('correct');
+        xp += 15;
+        updateHeader();
+        title.innerHTML = '🎉 מצוין!';
+        text.textContent = '+15 XP צברת נקודות!';
+      } else {
+        playSound('wrong');
+        hearts = Math.max(0, hearts - 1);
+        updateHeader();
+        title.innerHTML = '💔 לא מדויק...';
+        text.textContent = `התשובה הנכונה היא: ${correctAnswer}`;
+      }
+    }
+
+    function continueAfterFeedback() {
+      document.getElementById('feedback-banner').style.display = 'none';
+
+      if (hearts === 0) {
+        hearts = 3;
+        updateHeader();
+        switchModule('learn');
+      } else {
+        practiceIdx = (practiceIdx + 1) % qaData.length;
+        renderPractice();
+      }
+    }
+
+    renderLearn();
+  </script>
+</body>
+</html>
